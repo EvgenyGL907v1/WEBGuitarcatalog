@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from django.conf.urls.static import static
+from django.conf import settings
+
 
 from django.urls import path, include
 from testApp.views import page_not_found
@@ -25,6 +28,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('testApp.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 #Добавляем обработчик для страниц
 handler404 = page_not_found
