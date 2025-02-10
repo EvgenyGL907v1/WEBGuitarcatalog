@@ -1,5 +1,6 @@
-from django.http import HttpResponse, HttpResponseNotFound, Http404
-from django.shortcuts import render, redirect
+from django.http import HttpResponse, HttpResponseNotFound,  Http404
+from django.shortcuts import render, redirect, get_object_or_404
+from testApp.models import TestApp
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
@@ -11,28 +12,7 @@ menu = [
  {'title': "Войти", 'url_name': 'login'}
 ]
 
-data_db = [
-    {'id': 1, 'title': 'Гитара 1', 'content':
-    '''<h1>Акустическая гитара YAMAHA F310</h1> Прекрасный звук и отличное качество изготовления по демократичной цене - отличительные особенности гитары серии F.
-    Эта гитара способна передавать самые тонкие оттенки настроения, ее можно назвать совершенным инструментом.
-    Традиционный дизайн дредноутов в сочетании с громким акустическим звучанием и
-    хорошими игровыми качествами делают этот инструмент идеальным выбором.
-    Юные гитаристы по достоинству оценят комфорт при игре благодаря немного уменьшенной глубине корпуса и средней длине мензуры.
-    Тип гитары: вестерн
-    Материал верхней деки: ель
-    Материал накладки: яванский палисандр
-    Корпус: индонезийское красное дерево
-    Глубина корпуса: 96-116 мм
-    Материал обечаек: индонезийское красное дерево
-    Гриф: красное дерево
-    Материал струнодержателя: палисандр Сонокелинг
-    Колки: хром''',
-     'is_published': True},
-    {'id': 2, 'title': 'Гитара 2', 'content':
-        'Описание гитары 2', 'is_published': False},
-    {'id': 3, 'title': 'Гитара 3', 'content':
-        'Описание гитары 3', 'is_published': True},
-]
+
 
 cats_db = [
  {'id': 1, 'name': 'Классические гитары'},
@@ -51,16 +31,23 @@ def index(request):
  #return HttpResponse(render_to_string('testApp/index.html'))
  #return render(request, 'testApp/index.html')
  #return render(request, 'testApp/index.html', {'title': 'Главная страница'})
+    #posts = TestApp.objects.filter(is_published=1)
+    posts = TestApp.published.all()
     data = {
         'title': 'Главная страница',
         'menu': menu,
-        'posts': data_db,
-        'cat_selected': 0,
+        'posts': posts,
     }
     return render(request, 'testApp/index.html', context=data)
 
-def show_post(request, post_id):
- return HttpResponse(f"Отображение статьи с id = {post_id}")
+def show_post(request, post_slug):
+    post = get_object_or_404(TestApp, slug=post_slug)
+    data = {'title': post.title,
+            'menu': menu,
+            'post': post,
+            'cat_selected': 1,
+            }
+    return render(request, 'testApp/post.html', context=data)
 
 def addpage(request):
  return HttpResponse("Добавление статьи")
@@ -100,7 +87,7 @@ def show_category(request, cat_id):
     data = {
         'title': 'Отображение по рубрикам',
         'menu': menu,
-        'posts': data_db,
+        'posts': TestApp.published.all(),
         'cat_selected': cat_id,
     }
     return render(request, 'testApp/index.html', context=data)
