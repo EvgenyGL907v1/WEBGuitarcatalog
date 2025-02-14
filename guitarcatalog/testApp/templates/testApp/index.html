@@ -7,6 +7,10 @@
     {% for p in posts %}
     {% if p.is_published %}
     <li>
+        <div class="article-panel">
+            <p class="first">Категория: {{p.cat}}</p>
+            <p class="last">Дата: {{p.time_update|date:"d-m-Y H:i:s"}}</p>
+        </div>
         <h2>{{p.title}}</h2>
         {% autoescape off %}
         {{p.content|linebreaks|truncatewords:50}}

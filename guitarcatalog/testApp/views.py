@@ -1,6 +1,6 @@
 from django.http import HttpResponse, HttpResponseNotFound,  Http404
 from django.shortcuts import render, redirect, get_object_or_404
-from testApp.models import TestApp
+from testApp.models import TestApp, Category, TagPost
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
@@ -27,16 +27,13 @@ class MyClass:
   self.b = b
 
 def index(request):
- #return HttpResponse("Страница приложения testApp.")
- #return HttpResponse(render_to_string('testApp/index.html'))
- #return render(request, 'testApp/index.html')
- #return render(request, 'testApp/index.html', {'title': 'Главная страница'})
-    #posts = TestApp.objects.filter(is_published=1)
-    posts = TestApp.published.all()
+    posts = TestApp.objects.filter(is_published=1)
+    #posts = TestApp.published.all()
     data = {
         'title': 'Главная страница',
         'menu': menu,
-        'posts': posts,
+        'posts': TestApp.published.all(),
+        'cat_selected': 0,
     }
     return render(request, 'testApp/index.html', context=data)
 
@@ -45,9 +42,15 @@ def show_post(request, post_slug):
     data = {'title': post.title,
             'menu': menu,
             'post': post,
-            'cat_selected': 1,
+            'cat_selected': 0,
             }
     return render(request, 'testApp/post.html', context=data)
+
+#def about(request):
+ #return render(request, 'base.html', {'title': 'О сайте', 'menu': menu})
+
+def about(request):
+ return render(request, 'testApp/about.html', {'title': 'О сайте', 'menu': menu})
 
 def addpage(request):
  return HttpResponse("Добавление статьи")
@@ -77,17 +80,24 @@ def page_not_found(request, exception):
  return HttpResponseNotFound('<h1>Страница не найдена</h1>')
 
 
-#def about(request):
- #return render(request, 'base.html', {'title': 'О сайте', 'menu': menu})
-
-def about(request):
- return render(request, 'testApp/about.html', {'title': 'О сайте', 'menu': menu})
-
-def show_category(request, cat_id):
+def show_category(request, cat_slug):
+    category = get_object_or_404(Category, slug=cat_slug)
+    posts = TestApp.published.filter(cat_id=category.pk)
     data = {
-        'title': 'Отображение по рубрикам',
+        'title': f'Рубрика: {category.name}',
         'menu': menu,
-        'posts': TestApp.published.all(),
-        'cat_selected': cat_id,
+        'posts': posts,
+        'cat_selected': category.pk,
+    }
+    return render(request, 'testApp/index.html', context=data)
+
+def show_tag_postlist(request, tag_slug):
+    tag = get_object_or_404(TagPost, slug=tag_slug)
+    posts = tag.tags.filter(is_published=TestApp.Status.PUBLISHED)
+    data = {
+        'title': f'Тег: {tag.tags}',
+        'menu': menu,
+        'posts': posts,
+        'cat_selected': None,
     }
     return render(request, 'testApp/index.html', context=data)
