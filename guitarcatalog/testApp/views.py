@@ -1,6 +1,8 @@
 from django.http import HttpResponse, HttpResponseNotFound,  Http404
 from django.shortcuts import render, redirect, get_object_or_404
-from testApp.models import TestApp, Category, TagPost
+from testApp.models import TestApp, Category, TagPost, UploadFiles
+from testApp.forms import AddPostForm, UploadFileForm
+import uuid
 from django.template.loader import render_to_string
 from django.template.defaultfilters import slugify
 
@@ -46,14 +48,43 @@ def show_post(request, post_slug):
             }
     return render(request, 'testApp/post.html', context=data)
 
-#def about(request):
- #return render(request, 'base.html', {'title': 'О сайте', 'menu': menu})
+def handle_uploaded_file(f):
+    name = f.name
+    ext = ''
+    if '.' in name:
+        ext = name[name.rindex('.'):]
+        name = name[:name.rindex('.')]
+
+    suffix = str(uuid.uuid4())
+    with open(f"uploads/{name}_{suffix}{ext}", "wb+") as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
 
 def about(request):
- return render(request, 'testApp/about.html', {'title': 'О сайте', 'menu': menu})
+    if request.method == "POST":
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            fp = UploadFiles(file=form.cleaned_data['file'])
+            fp.save()
+            #handle_uploaded_file(form.cleaned_data['file'])
+        #handle_uploaded_file(request.FILES['file_upload'])
+    else:
+        form = UploadFileForm()
+    return render(request, 'testApp/about.html',
+                  {'title': 'О сайте', 'menu': menu, 'form': form})
 
 def addpage(request):
- return HttpResponse("Добавление статьи")
+    if request.method == 'POST':
+        form = AddPostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('home')
+    else:
+        form = AddPostForm()
+    return render(request, 'testApp/addpage.html',
+        {'menu': menu,
+         'title': 'Добавление статьи',
+         'form': form})
 
 def contact(request):
  return HttpResponse("Обратная связь")

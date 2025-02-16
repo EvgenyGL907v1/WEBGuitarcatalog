@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.core.checks import messages
 from .models import *
+from django.utils.safestring import mark_safe
 
 #admin.site.register(TestApp)
 
@@ -22,7 +23,7 @@ class ViewFilter(admin.SimpleListFilter):
 
 @admin.register(TestApp)
 class TestAppAdmin(admin.ModelAdmin):
-    list_display = ('title', 'time_create', 'is_published', 'cat', 'brief_info')
+    list_display = ('title', 'post_photo', 'time_create', 'is_published', 'cat', 'brief_info')
     list_display_links = ('title', )
     ordering = ['-time_create', 'title']
     list_editable = ('is_published',)
@@ -30,12 +31,21 @@ class TestAppAdmin(admin.ModelAdmin):
     actions = ['set_published', 'set_draft']
     search_fields = ['title__startswith', 'cat__name']
     list_filter = [ViewFilter, 'cat__name', 'is_published']
-    fields = ['title', 'slug', 'content', 'cat', 'article']
-    readonly_fields = ['slug']
+    fields = ['title', 'slug', 'content', 'photo',
+              'post_photo', 'cat', 'article', 'tags']
+    #readonly_fields = ['slug']
+    readonly_fields = ['post_photo']
+    save_on_top = True
 
     @admin.display(description="Краткое описание")
     def brief_info(self, women: TestApp):
         return f"Описание {len(women.content)} символов."
+
+    @admin.display(description="Изображение")
+    def post_photo(self, testApp: TestApp):
+        if testApp.photo:
+            return mark_safe(f"<img src='{testApp.photo.url}' width=50>")
+        return "Без изображения"
 
     @admin.action(description="Опубликовать выбранные записи")
     def set_published(self, request, queryset):

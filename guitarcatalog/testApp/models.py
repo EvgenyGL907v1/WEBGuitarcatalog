@@ -6,6 +6,9 @@ class PublishedModel(models.Manager):
         #return super().get_queryset().filter(is_published=1)
         return super().get_queryset().filter(is_published=TestApp.Status.PUBLISHED)
 
+class UploadFiles(models.Model):
+    file = models.FileField(upload_to='uploads_model')
+
 def translit_to_eng(s: str) -> str:
     d = {'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e',
          'ё': 'yo', 'ж': 'zh', 'з': 'z', 'и': 'i', 'к': 'k', 'л': 'l',
@@ -31,6 +34,7 @@ class TestApp(models.Model):
     tags = models.ManyToManyField('TagPost', blank=True, related_name='tags', verbose_name="Тэги")
     article = models.OneToOneField('Article', on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name='article', verbose_name="Код артикула")
+    photo = models.ImageField(upload_to="photos/%Y/%m/%d/", default=None, blank=True, null=True, verbose_name="Фото")
     view_count = models.IntegerField(blank='True', default=0)
 
     objects = models.Manager()
@@ -43,7 +47,7 @@ class TestApp(models.Model):
         verbose_name_plural = 'Гитары'
 
     def save(self, *args, **kwargs):
-        self.slug = translit_to_eng(self.title)
+        #self.slug = translit_to_eng(self.title)
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
