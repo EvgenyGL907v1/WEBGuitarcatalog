@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse, HttpResponseNotFound,  Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from testApp.models import TestApp, Category, TagPost, UploadFiles
@@ -11,6 +12,7 @@ from testApp.utils import DataMixin
 from django.views.generic.edit import FormView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 
 menu = [
@@ -122,8 +124,9 @@ class AddPage(FormView):
         form.save()
         return super().form_valid(form)
 '''
-class AddPage(DataMixin, CreateView):
+class AddPage(PermissionRequiredMixin, LoginRequiredMixin, DataMixin, CreateView):
     model = TestApp
+    permission_required = 'testApp.add_testApp'
     #form_class = AddPostForm
     fields = ['title', 'slug', 'content', 'photo',
               'is_published', 'cat', 'article', 'tags']
@@ -132,12 +135,14 @@ class AddPage(DataMixin, CreateView):
     title_page = 'Добавление статьи'
 
     def form_valid(self, form):
-        form.save()
+        w = form.save(commit=False)
+        w.author = self.request.user
         return super().form_valid(form)
 
 
-class UpdatePage(DataMixin, UpdateView):
+class UpdatePage(PermissionRequiredMixin, DataMixin, UpdateView):
     model = TestApp
+    permission_required = 'testApp.change_testApp'
     fields = ['title', 'slug', 'content', 'photo',
               'is_published', 'cat', 'article', 'tags']
     template_name = 'testApp/addpage.html'
@@ -155,8 +160,10 @@ class DeletePage(DataMixin, DeleteView):
         context.update(self.extra_context)
         return context
 
+@permission_required(perm='testApp.view_testApp', raise_exception=True)
 def contact(request):
     return HttpResponse("Обратная связь")
+
 
 def page_not_found(request, exception):
     return HttpResponseNotFound('<h1>Страница не найдена</h1>')
@@ -164,6 +171,7 @@ def page_not_found(request, exception):
 def login(request):
     return HttpResponse("Авторизация")
 
+@login_required
 def about(request):
     contact_list = TestApp.published.all()
     paginator = Paginator(contact_list, 3)

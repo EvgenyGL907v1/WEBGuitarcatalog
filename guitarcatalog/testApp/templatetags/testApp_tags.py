@@ -2,6 +2,7 @@ from django import template
 from django.db.models import Count
 import testApp.views as views
 from testApp.models import Category, TagPost
+from testApp.utils import menu
 
 register = template.Library()
 
@@ -17,3 +18,7 @@ def show_categories(cat_selected=0):
 @register.inclusion_tag('testApp/list_tags.html')
 def show_all_tags():
     return {'tags': TagPost.objects.annotate(total=Count('tags')).filter(total__gt=0)}
+
+@register.simple_tag
+def get_menu():
+    return menu
