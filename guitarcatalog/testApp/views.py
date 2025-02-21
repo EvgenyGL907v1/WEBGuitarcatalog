@@ -29,18 +29,7 @@ cats_db = [
  {'id': 4, 'name': 'Бас-гитары'},
 ]
 
-'''
-def index(request):
-    posts = TestApp.objects.filter(is_published=1)
-    #posts = TestApp.published.all()
-    data = {
-        'title': 'Главная страница',
-        'menu': menu,
-        'posts': TestApp.published.all(),
-        'cat_selected': 0,
-    }
-    return render(request, 'testApp/index.html', context=data)
-'''
+
 class TestAppHome(DataMixin, ListView):
     template_name = 'testApp/index.html'
     context_object_name = 'posts'
@@ -53,16 +42,7 @@ class TestAppHome(DataMixin, ListView):
     def get_queryset(self):
         return TestApp.published.all().select_related('cat')
 
-'''
-def show_post(request, post_slug):
-    post = get_object_or_404(TestApp, slug=post_slug)
-    data = {'title': post.title,
-            'menu': menu,
-            'post': post,
-            'cat_selected': 0,
-            }
-    return render(request, 'testApp/post.html', context=data)
-'''
+
 class ShowPost(DataMixin, DetailView):
     model = TestApp
     template_name = 'testApp/post.html'
@@ -78,55 +58,9 @@ class ShowPost(DataMixin, DetailView):
                 (TestApp.published,
                  slug=self.kwargs[self.slug_url_kwarg]))
 
-'''
-def addpage(request):
-    if request.method == 'POST':
-        form = AddPostForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-    else:
-        form = AddPostForm()
-    return render(request, 'testApp/addpage.html',
-        {'menu': menu,
-         'title': 'Добавление статьи',
-         'form': form})
-'''
-'''
-class AddPage(View):
-    form_class = AddPostForm
-    template_name = 'testApp/addpage.html'
-
-    def get(self, request):
-        form = AddPostForm()
-        return render(request, 'testApp/addpage.html',
-            {'menu': menu, 'title': 'Добавление статьи', 'form': form})
-
-    def post(self, request):
-        form = AddPostForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
-        return render(request, 'testApp/addpage.html',
-            {'menu': menu, 'title': 'Добавление статьи', 'form':form})
-'''
-'''
-class AddPage(FormView):
-    form_class = AddPostForm
-    template_name = 'testApp/addpage.html'
-    success_url = reverse_lazy('home')
-    extra_context = {
-        'menu': menu,
-        'title': 'Добавление статьи',
-    }
-
-    def form_valid(self, form):
-        form.save()
-        return super().form_valid(form)
-'''
 class AddPage(PermissionRequiredMixin, LoginRequiredMixin, DataMixin, CreateView):
     model = TestApp
-    permission_required = 'testApp.add_testApp'
+    permission_required = 'testApp.add_testapp'
     #form_class = AddPostForm
     fields = ['title', 'slug', 'content', 'photo',
               'is_published', 'cat', 'article', 'tags']
@@ -142,15 +76,16 @@ class AddPage(PermissionRequiredMixin, LoginRequiredMixin, DataMixin, CreateView
 
 class UpdatePage(PermissionRequiredMixin, DataMixin, UpdateView):
     model = TestApp
-    permission_required = 'testApp.change_testApp'
+    permission_required = 'testApp.change_testapp'
     fields = ['title', 'slug', 'content', 'photo',
               'is_published', 'cat', 'article', 'tags']
     template_name = 'testApp/addpage.html'
     success_url = reverse_lazy('home')
     title_page = 'Редактирование статьи'
 
-class DeletePage(DataMixin, DeleteView):
+class DeletePage(PermissionRequiredMixin, DataMixin, DeleteView):
     model = TestApp
+    permission_required = 'testApp.delete_testapp'
     template_name = 'testApp/deletepage.html'
     success_url = reverse_lazy('home')
     title_page = 'Удаление статьи'
@@ -160,7 +95,7 @@ class DeletePage(DataMixin, DeleteView):
         context.update(self.extra_context)
         return context
 
-@permission_required(perm='testApp.view_testApp', raise_exception=True)
+@permission_required(perm='testApp.view_testapp', raise_exception=True)
 def contact(request):
     return HttpResponse("Обратная связь")
 
@@ -189,38 +124,6 @@ def about(request):
     #return render(request, 'testApp/about.html', {'title': 'О сайте', 'menu': menu, 'form': form})
     return render(request, 'testApp/about.html', {'page_obj': page_obj, 'title': 'О сайте'})
 
-'''
-def categories(request, catID):
- return HttpResponse(f"<h1>Статьи по категориям</h1><p> int:{catID}<p>")
-'''
-
-'''
-def categories_by_slug(request, catSlug):
- if request.GET:
-  print(request.GET)
- return HttpResponse(f"<h1>Статьи по категориям</h1><p > slug:{ catSlug }</p>")
-'''
-
-'''
-def archive(request, year):
- if year > 2023:
-  #raise Http404()
-  return redirect('home', permanent=True)
- return HttpResponse(f"<h1>Архив по годам</h1><p>{year}</p>")
-'''
-
-'''
-def show_category(request, cat_slug):
-    category = get_object_or_404(Category, slug=cat_slug)
-    posts = TestApp.published.filter(cat_id=category.pk)
-    data = {
-        'title': f'Рубрика: {category.name}',
-        'menu': menu,
-        'posts': posts,
-        'cat_selected': category.pk,
-    }
-    return render(request, 'testApp/index.html', context=data)
-'''
 class TestAppCategory(DataMixin, ListView):
     template_name = 'testApp/index.html'
     context_object_name = 'posts'
@@ -229,10 +132,7 @@ class TestAppCategory(DataMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
         cat = context['posts'][0].cat
-        '''context['title'] = 'Категория - ' + cat.name
-        context['menu'] = menu
-        context['cat_selected'] = cat.id
-        return context'''
+
         return self.get_mixin_context(context,
                                       title='Категория - ' + cat.name,
                                       cat_selected=cat.id)
@@ -240,18 +140,6 @@ class TestAppCategory(DataMixin, ListView):
     def get_queryset(self):
         return TestApp.published.filter(cat__slug=self.kwargs['cat_slug' ]).select_related('cat')
 
-'''
-def show_tag_postlist(request, tag_slug):
-    tag = get_object_or_404(TagPost, slug=tag_slug)
-    posts = tag.tags.filter(is_published=TestApp.Status.PUBLISHED)
-    data = {
-        'title': f'Тег: {tag.tags}',
-        'menu': menu,
-        'posts': posts,
-        'cat_selected': None,
-    }
-    return render(request, 'testApp/index.html', context=data)
-'''
 class TagPostList(DataMixin, ListView):
     template_name = 'testApp/index.html'
     context_object_name = 'posts'
@@ -260,10 +148,6 @@ class TagPostList(DataMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
         tag = TagPost.objects.get(slug=self.kwargs['tag_slug'])
-        '''context['title'] = 'Тег: ' + tag.tag
-        context['menu'] = menu
-        context['cat_selected'] = None
-        return context'''
         return self.get_mixin_context(context, title='Тег: ' + tag.tag)
 
     def get_queryset(self):

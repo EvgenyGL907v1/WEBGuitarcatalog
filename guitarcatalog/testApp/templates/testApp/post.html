@@ -4,9 +4,14 @@
 <!-- Теги -->
 {{ perms }}
 
-{% if perms.testApp.change_testApp %}
+{% if perms.testApp.change_testapp %}
 <p >
     <a href="{% url 'edit_page' post.slug %}">Редактировать</a>
+</p>
+{% endif %}
+{% if perms.testApp.delete_testapp %}
+<p >
+    <a href="{% url 'delete_page' post.slug %}">Удалить</a>
 </p>
 {% endif %}
 
